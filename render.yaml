@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: splitwise-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build -w @splitwise/api
+    startCommand: npm run start -w @splitwise/api
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.13.0
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
