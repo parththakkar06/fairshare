@@ -21,6 +21,8 @@ const groupSchema = new Schema<GroupDocument>(
   {
     timestamps: true,
     versionKey: false,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   },
 );
 

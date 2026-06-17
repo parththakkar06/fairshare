@@ -14,14 +14,14 @@ const splitTypeSchema = z.enum(['equal', 'exact', 'percentage']);
 
 const participantSchema = z.object({
   userId: z.string().min(1),
-  amount: z.coerce.number().positive(),
+  amount: z.coerce.number().positive().transform((val) => Math.round(val * 100) / 100),
   percentage: z.number().min(0).max(100).optional(),
 });
 
 export const createExpenseSchema = z.object({
   groupId: z.string().min(1),
   title: z.string().trim().min(3).max(120),
-  amount: z.coerce.number().positive(),
+  amount: z.coerce.number().positive().transform((val) => Math.round(val * 100) / 100),
   category: categorySchema,
   note: z.string().trim().max(300).optional().default(''),
   paidBy: z.string().min(1),

@@ -61,6 +61,11 @@ class TestGroupRepository implements GroupRepository {
     return Promise.resolve({ ...this.group, members: [...this.group.members, member] });
   }
 
+  removeMember(_groupId: string, userId: string): Promise<GroupDocument | null> {
+    const nextMembers = this.group.members.filter((m) => m.userId !== userId);
+    return Promise.resolve({ ...this.group, members: nextMembers });
+  }
+
   deleteById(): Promise<void> {
     return Promise.resolve();
   }
@@ -108,6 +113,13 @@ class TestExpenseRepository implements ExpenseRepository {
     this.expense = null;
     return Promise.resolve();
   }
+
+  deleteByGroupId(groupId: string): Promise<void> {
+    if (this.expense?.groupId === groupId) {
+      this.expense = null;
+    }
+    return Promise.resolve();
+  }
 }
 
 class TestSettlementRepository implements SettlementRepository {
@@ -123,6 +135,10 @@ class TestSettlementRepository implements SettlementRepository {
 
   findByGroupId(): Promise<SettlementDocument[]> {
     return Promise.resolve([]);
+  }
+
+  deleteByGroupId(): Promise<void> {
+    return Promise.resolve();
   }
 }
 

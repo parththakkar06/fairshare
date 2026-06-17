@@ -10,14 +10,15 @@ import { apiRouter } from './routes/index.js';
 import { MongooseAuthRepository, type AuthRepository } from './modules/auth/auth.repository.js';
 import { AuthService } from './modules/auth/auth.service.js';
 import { TokenService } from './modules/auth/token.service.js';
-import { MongooseGroupRepository } from './modules/group/group.repository.js';
+import { MongooseGroupRepository, type GroupRepository } from './modules/group/group.repository.js';
 import { GroupService } from './modules/group/group.service.js';
-import { MongooseExpenseRepository } from './modules/expense/expense.repository.js';
+import { MongooseExpenseRepository, type ExpenseRepository } from './modules/expense/expense.repository.js';
 import { ExpenseService } from './modules/expense/expense.service.js';
 import { DashboardService } from './modules/dashboard/dashboard.service.js';
-import { MongooseSettlementRepository } from './modules/settlement/settlement.repository.js';
+import { MongooseSettlementRepository, type SettlementRepository } from './modules/settlement/settlement.repository.js';
 import { SettlementService } from './modules/settlement/settlement.service.js';
 import { BalanceService } from './modules/balance/balance.service.js';
+import { GroupMutex } from './common/utils/group-mutex.js';
 
 interface CreateAppOptions {
   clientOrigin: string;
@@ -25,6 +26,9 @@ interface CreateAppOptions {
   jwtAccessSecret?: string;
   jwtRefreshSecret?: string;
   authRepository?: AuthRepository;
+  groupRepository?: GroupRepository;
+  expenseRepository?: ExpenseRepository;
+  settlementRepository?: SettlementRepository;
 }
 
 export function createApp({
@@ -33,25 +37,34 @@ export function createApp({
   jwtAccessSecret = 'test-access-secret-that-is-at-least-32-characters',
   jwtRefreshSecret = 'test-refresh-secret-that-is-at-least-32-characters',
   authRepository = new MongooseAuthRepository(),
+  groupRepository,
+  expenseRepository,
+  settlementRepository,
 }: CreateAppOptions): Express {
   const app = express();
   const tokens = new TokenService({
     accessSecret: jwtAccessSecret,
     refreshSecret: jwtRefreshSecret,
   });
+
+  const groupMutex = new GroupMutex();
+  const finalGroupRepo = groupRepository ?? new MongooseGroupRepository();
+  const finalExpenseRepo = expenseRepository ?? new MongooseExpenseRepository();
+  const finalSettlementRepo = settlementRepository ?? new MongooseSettlementRepository();
+
   const authService = new AuthService(authRepository, tokens);
-  const groupService = new GroupService(new MongooseGroupRepository());
-  const expenseService = new ExpenseService(new MongooseExpenseRepository(), groupService);
-  const settlementService = new SettlementService(new MongooseSettlementRepository(), groupService);
+  const groupService = new GroupService(finalGroupRepo, finalExpenseRepo, finalSettlementRepo, groupMutex);
+  const expenseService = new ExpenseService(finalExpenseRepo, groupService, groupMutex);
+  const settlementService = new SettlementService(finalSettlementRepo, groupService, finalExpenseRepo, groupMutex);
   const dashboardService = new DashboardService(
-    new MongooseGroupRepository(),
-    new MongooseExpenseRepository(),
-    new MongooseSettlementRepository(),
+    finalGroupRepo,
+    finalExpenseRepo,
+    finalSettlementRepo,
   );
   const balanceService = new BalanceService(
-    new MongooseExpenseRepository(),
-    new MongooseSettlementRepository(),
-    new MongooseGroupRepository(),
+    finalExpenseRepo,
+    finalSettlementRepo,
+    finalGroupRepo,
   );
 
   app.disable('x-powered-by');

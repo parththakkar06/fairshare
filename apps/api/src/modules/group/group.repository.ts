@@ -7,6 +7,7 @@ export interface GroupRepository {
   findById(id: string): Promise<GroupDocument | null>;
   findAllByMember(userId: string): Promise<GroupDocument[]>;
   addMember(groupId: string, member: { userId: string; name: string; email: string }): Promise<GroupDocument>;
+  removeMember(groupId: string, userId: string): Promise<GroupDocument | null>;
   deleteById(groupId: string): Promise<void>;
 }
 
@@ -25,7 +26,8 @@ export class MongooseGroupRepository implements GroupRepository {
   }
 
   async findAllByMember(userId: string): Promise<GroupDocument[]> {
-    return GroupModel.find({ 'members.userId': userId }).exec();
+    const documents = await GroupModel.find({ 'members.userId': userId }).exec();
+    return documents.map((document) => document.toObject({ versionKey: false }) as GroupDocument);
   }
 
   async addMember(groupId: string, member: { userId: string; name: string; email: string }): Promise<GroupDocument> {
@@ -36,7 +38,16 @@ export class MongooseGroupRepository implements GroupRepository {
     ).exec() as Promise<GroupDocument>;
   }
 
+  async removeMember(groupId: string, userId: string): Promise<GroupDocument | null> {
+    return GroupModel.findByIdAndUpdate(
+      groupId,
+      { $pull: { members: { userId } } },
+      { new: true },
+    ).exec() as Promise<GroupDocument | null>;
+  }
+
   async deleteById(groupId: string): Promise<void> {
     await GroupModel.findByIdAndDelete(groupId).exec();
   }
 }
+

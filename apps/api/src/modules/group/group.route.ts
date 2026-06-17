@@ -93,6 +93,34 @@ export function createGroupRouter({ service, authService, tokens }: GroupRouterO
     }
   });
 
+  router.post('/:groupId/leave', writeLimit, authenticate(tokens), async (request, response, next) => {
+    try {
+      const auth = (request as unknown as AuthenticatedRequest).auth;
+      const groupId = String(request.params.groupId);
+      const group = await service.leaveGroup(groupId, auth.userId);
+      response.status(200).json({ group });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(
+    '/:groupId/members/:memberId/remove',
+    writeLimit,
+    authenticate(tokens),
+    async (request, response, next) => {
+      try {
+        const auth = (request as unknown as AuthenticatedRequest).auth;
+        const groupId = String(request.params.groupId);
+        const memberId = String(request.params.memberId);
+        const group = await service.removeMember(groupId, auth.userId, memberId);
+        response.status(200).json({ group });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
   router.delete('/:groupId', authenticate(tokens), async (request, response, next) => {
     try {
       const auth = (request as unknown as AuthenticatedRequest).auth;
@@ -106,3 +134,4 @@ export function createGroupRouter({ service, authService, tokens }: GroupRouterO
 
   return router;
 }
+

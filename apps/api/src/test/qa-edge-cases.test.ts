@@ -114,6 +114,13 @@ class MemoryGroupRepository implements GroupRepository {
     return Promise.resolve(structuredClone(found));
   }
 
+  removeMember(groupId: string, userId: string): Promise<GroupDocument | null> {
+    const found = this.groups.find((candidate) => candidate.id === groupId);
+    if (!found) return Promise.resolve(null);
+    found.members = found.members.filter((m) => m.userId !== userId);
+    return Promise.resolve(structuredClone(found));
+  }
+
   deleteById(groupId: string): Promise<void> {
     const index = this.groups.findIndex((candidate) => candidate.id === groupId);
     if (index >= 0) this.groups.splice(index, 1);
@@ -154,10 +161,15 @@ class MemoryExpenseRepository implements ExpenseRepository {
     this.expenses = this.expenses.filter((candidate) => candidate.id !== id);
     return Promise.resolve();
   }
+
+  deleteByGroupId(groupId: string): Promise<void> {
+    this.expenses = this.expenses.filter((candidate) => candidate.groupId !== groupId);
+    return Promise.resolve();
+  }
 }
 
 class MemorySettlementRepository implements SettlementRepository {
-  constructor(private readonly settlements: SettlementDocument[] = [settlement()]) {}
+  constructor(private settlements: SettlementDocument[] = [settlement()]) {}
 
   create(input: CreateSettlementInput): Promise<SettlementDocument> {
     const created = settlement({
@@ -175,6 +187,11 @@ class MemorySettlementRepository implements SettlementRepository {
         .filter((candidate) => candidate.groupId === groupId)
         .map((candidate) => structuredClone(candidate)),
     );
+  }
+
+  deleteByGroupId(groupId: string): Promise<void> {
+    this.settlements = this.settlements.filter((candidate) => candidate.groupId !== groupId);
+    return Promise.resolve();
   }
 }
 

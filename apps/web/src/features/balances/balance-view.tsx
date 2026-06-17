@@ -86,10 +86,13 @@ export function BalanceView({ groupId, members }: BalanceViewProps) {
 
         <div className="mt-6 space-y-3">
           {balance.members.map((member) => (
-            <div key={member.userId} className="interactive-surface flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div key={member.userId} className={`interactive-surface flex items-center justify-between gap-4 rounded-2xl border p-4 ${member.isCurrentMember ? 'border-slate-200 bg-white' : 'border-amber-200 bg-amber-50'}`}>
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-slate-950">
                   {member.userId === user?.id ? 'You' : member.name}
+                  {!member.isCurrentMember && (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Former member</span>
+                  )}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
                   {member.balance === 0

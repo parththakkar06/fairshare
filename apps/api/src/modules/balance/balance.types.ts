@@ -4,6 +4,8 @@ export interface MemberBalance {
   balance: number;
   owesAmount: number;
   isOwedAmount: number;
+  /** True if the user is currently an active member of the group. False for former members with outstanding balances. */
+  isCurrentMember: boolean;
 }
 
 export interface SettlementSuggestion {

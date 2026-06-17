@@ -7,6 +7,7 @@ export interface ExpenseRepository {
   findByGroupId(groupId: string): Promise<ExpenseDocument[]>;
   update(id: string, input: UpdateExpenseInput): Promise<ExpenseDocument>;
   deleteById(id: string): Promise<void>;
+  deleteByGroupId(groupId: string): Promise<void>;
 }
 
 export class MongooseExpenseRepository implements ExpenseRepository {
@@ -35,5 +36,9 @@ export class MongooseExpenseRepository implements ExpenseRepository {
 
   async deleteById(id: string): Promise<void> {
     await ExpenseModel.findByIdAndDelete(id).exec();
+  }
+
+  async deleteByGroupId(groupId: string): Promise<void> {
+    await ExpenseModel.deleteMany({ groupId }).exec();
   }
 }

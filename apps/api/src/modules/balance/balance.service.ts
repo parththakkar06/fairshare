@@ -63,10 +63,31 @@ export class BalanceService {
     expenses: ExpenseDocument[],
     settlements: SettlementDocument[],
   ): MemberBalance[] {
-    const balances = new Map<string, { userId: string; name: string; balance: number }>();
+    const balances = new Map<string, { userId: string; name: string; balance: number; isCurrentMember: boolean }>();
 
     members.forEach((member) => {
-      balances.set(member.userId, { userId: member.userId, name: member.name, balance: 0 });
+      balances.set(member.userId, { userId: member.userId, name: member.name, balance: 0, isCurrentMember: true });
+    });
+
+    // Populate former members who have transactions
+    expenses.forEach((expense) => {
+      if (!balances.has(expense.paidBy)) {
+        balances.set(expense.paidBy, { userId: expense.paidBy, name: 'Former Member', balance: 0, isCurrentMember: false });
+      }
+      expense.participants.forEach((participant) => {
+        if (!balances.has(participant.userId)) {
+          balances.set(participant.userId, { userId: participant.userId, name: 'Former Member', balance: 0, isCurrentMember: false });
+        }
+      });
+    });
+
+    settlements.forEach((settlement) => {
+      if (!balances.has(settlement.fromUserId)) {
+        balances.set(settlement.fromUserId, { userId: settlement.fromUserId, name: 'Former Member', balance: 0, isCurrentMember: false });
+      }
+      if (!balances.has(settlement.toUserId)) {
+        balances.set(settlement.toUserId, { userId: settlement.toUserId, name: 'Former Member', balance: 0, isCurrentMember: false });
+      }
     });
 
     expenses.forEach((expense) => {
@@ -88,27 +109,35 @@ export class BalanceService {
       const toBalance = balances.get(settlement.toUserId);
 
       if (fromBalance && toBalance) {
-        // fromUserId is the payer/initiator, toUserId is the recipient.
-        // A payment should reduce the payer's negative debt and reduce the recipient's positive credit.
         fromBalance.balance += settlement.amount;
         toBalance.balance -= settlement.amount;
       }
     });
 
     return Array.from(balances.values())
+      .filter((balance) => {
+        // Always include current members; include former members only if they
+        // have a non-zero cent-level residual balance so the global sum stays 0.
+        return balance.isCurrentMember || Math.round(Math.abs(balance.balance) * 100) !== 0;
+      })
       .map((balance) => ({
         userId: balance.userId,
         name: balance.name,
         balance: Math.round(balance.balance * 100) / 100,
         owesAmount: Math.max(0, Math.round(balance.balance * -100) / 100),
         isOwedAmount: Math.max(0, Math.round(balance.balance * 100) / 100),
+        isCurrentMember: balance.isCurrentMember,
       }))
       .sort((left, right) => left.balance - right.balance);
   }
 
   private generateSettlementSuggestions(memberBalances: MemberBalance[]): SettlementSuggestion[] {
     const suggestions: SettlementSuggestion[] = [];
-    const balances = memberBalances.map((member) => ({ ...member }));
+    // Only generate suggestions for current members — former members with residual
+    // balances are visible in the member list but cannot be part of new settlements.
+    const balances = memberBalances
+      .filter((member) => member.isCurrentMember)
+      .map((member) => ({ ...member }));
 
     const debtors = balances
       .filter((balance) => balance.balance < 0)

@@ -81,6 +81,9 @@ export function ExpensesPage() {
     }
   }, [selectedGroupId, selectedGroup?.members, user, form]);
 
+  console.log(groups);
+console.log(selectedGroupId);
+console.log(selectedGroup);
   async function handleCreateExpense(values: ExpenseFormValues) {
     setMessage(null);
 
@@ -102,7 +105,12 @@ export function ExpensesPage() {
 
     try {
       await createExpense(payload);
-      await queryClient.invalidateQueries({ queryKey: ['expenses', values.groupId] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['expenses', values.groupId] }),
+        queryClient.invalidateQueries({ queryKey: ['balance', values.groupId] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['groups'] }),
+      ]);
       form.reset({
         groupId: values.groupId,
         title: '',
@@ -231,7 +239,7 @@ export function ExpensesPage() {
                   <p className="mt-2 text-sm text-rose-600">{form.formState.errors.category.message}</p>
                 ) : null}
               </div>
-
+               
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Paid by</label>
                 <select

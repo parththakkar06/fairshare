@@ -12,6 +12,8 @@ const settlementSchema = new Schema<SettlementDocument>(
   {
     timestamps: true,
     versionKey: false,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   },
 );
 

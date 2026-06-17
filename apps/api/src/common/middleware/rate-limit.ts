@@ -16,6 +16,10 @@ export function rateLimit({ windowMs, maxRequests }: RateLimitOptions): RequestH
   const buckets = new Map<string, RateLimitBucket>();
 
   return (request, _response, next) => {
+    if (process.env.NODE_ENV === 'test') {
+      next();
+      return;
+    }
     const now = Date.now();
     const key = request.ip ?? request.socket.remoteAddress ?? 'unknown';
     const bucket = buckets.get(key);

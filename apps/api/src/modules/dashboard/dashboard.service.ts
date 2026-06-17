@@ -122,10 +122,10 @@ export class DashboardService {
 
           if (settlement.fromUserId === userId) {
             balance += settlement.amount;
-            totalOwed -= settlement.amount;
+            totalOwing -= settlement.amount;
           } else if (settlement.toUserId === userId) {
             balance -= settlement.amount;
-            totalOwing -= settlement.amount;
+            totalOwed -= settlement.amount;
           }
 
           const description = settlement.fromUserId === userId

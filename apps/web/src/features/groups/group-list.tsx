@@ -46,7 +46,10 @@ export function GroupList() {
     setMessage(null);
     try {
       await createGroup(values);
-      await queryClient.invalidateQueries({ queryKey: ['groups'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['groups'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      ]);
       createGroupForm.reset({ name: '', type: 'trip' });
       setMessage('Group created successfully.');
     } catch (error) {
@@ -58,7 +61,10 @@ export function GroupList() {
     setMessage(null);
     try {
       await joinGroup(values);
-      await queryClient.invalidateQueries({ queryKey: ['groups'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['groups'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      ]);
       joinGroupForm.reset();
       setMessage('Joined group successfully.');
     } catch (error) {
