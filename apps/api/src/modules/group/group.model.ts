@@ -26,6 +26,4 @@ const groupSchema = new Schema<GroupDocument>(
   },
 );
 
-groupSchema.index({ inviteCode: 1 }, { unique: true });
-
 export const GroupModel = model<GroupDocument>('Group', groupSchema);
