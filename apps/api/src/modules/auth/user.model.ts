@@ -20,5 +20,6 @@ const userSchema = new Schema<UserDocument>(
     timestamps: true,
     versionKey: false,
   },
+);
 
 export const UserModel = model<UserDocument>('User', userSchema);
